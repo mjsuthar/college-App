@@ -12,84 +12,87 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
-public class project1 extends JFrame implements ActionListener{
-	
-	private JLabel lno,lname,laddr;
-	private JTextField tno,tname,taddr;
-	private JButton jinsert, jdelete, jupdate, jview;
-	private Statement st;
-	private ResultSet rs;
+public class miniproject extends JFrame implements ActionListener{
+	private JLabel lno,lname,lm1,lm2,lm3,lres;
+	private JTextField tname,tm1,tm2,tm3,tres;
+	private JButton bdetails,bresult;
+	private JComboBox tno;
 	private Connection con;
-//	private CallableStatement cs;
-	PreparedStatement ps1,ps2,ps3;
+	private Statement st;
+	private ResultSet rs1,rs2;
+	private PreparedStatement ps;
+	private CallableStatement cs;
 	
-	public project1() {
-		System.out.println("project 0-params constructor");
-		setTitle("all in one");
+	public miniproject() {
+		System.out.println("All-Student 0 param constructor");
+		setTitle("mini project");
 		setSize(200,300);
 		setLayout(new FlowLayout());
-		setBackground(Color.cyan);
+		setBackground(Color.CYAN);
 		
-		lno=new JLabel("sno");
+		lno=new JLabel("Student Id");
 		add(lno);
-		tno=new JTextField(10);
+		tno=new JComboBox();
 		add(tno);
+		
+		bdetails=new JButton("details");
+		bdetails.addActionListener(this); //tno
+		add(bdetails);
 		
 		lname=new JLabel("Name");
 		add(lname);
 		tname=new JTextField(10);
 		add(tname);
 		
-		laddr=new JLabel("Address");
-		add(laddr);
-		taddr=new JTextField(10);
-		add(taddr);
+		lm1=new JLabel("marks1");
+		add(lm1);
+		tm1=new JTextField(10);
+		add(tm1);
 		
-		jinsert=new JButton("Insert");
-		jinsert.addActionListener(this);
-		add(jinsert);
+		lm2=new JLabel("marks2");
+		add(lm2);
+		tm2=new JTextField(10);
+		add(tm2);
 		
-		jupdate=new JButton("Upadate");
-		jupdate.addActionListener(this);
-		add(jupdate);
+		lm3=new JLabel("marks3");
+		add(lm3);
+		tm3=new JTextField(10);
+		add(tm3);
 		
-		jdelete=new JButton("Delete");
-		jdelete.addActionListener(this);
-		add(jdelete);
+		bresult=new JButton("Result");
+		bresult.addActionListener(this);//tno
+		add(bresult);
 		
-		jview=new JButton("View");
-		jview.addActionListener(this);
-		add(jview);
+		lres=new JLabel("Result");
+		add(lres);
+		tres=new JTextField(10);
+		add(tres);
+		
+		tname.setEditable(false); tm1.setEditable(false); tm2.setEditable(false); tm3.setEditable(false); tres.setEditable(false);		
 		setVisible(true);
+		
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.out.println("window closing");
 				try{
-					if(ps1!=null)
-					ps1.close();
+					if(rs1!=null)
+					rs1.close();
 				}	
 				catch(SQLException se){
 					se.printStackTrace();
 				}
 				try{
-					if(ps2!=null)
-					ps2.close();
+					if(rs2!=null)
+					rs2.close();
 				}	
 				catch(SQLException se){
 					se.printStackTrace();
 				}
 				try{
-					if(ps3!=null)
-					ps3.close();
-				}	
-				catch(SQLException se){
-					se.printStackTrace();
-				}
-				try{
-					if(rs!=null)
-					rs.close();
+					if(cs!=null)
+					cs.close();
 				}	
 				catch(SQLException se){
 					se.printStackTrace();
@@ -102,135 +105,110 @@ public class project1 extends JFrame implements ActionListener{
 					se.printStackTrace();
 				}
 				try{
+					if(ps!=null)
+					ps.close();
+				}	
+				catch(SQLException se){
+					se.printStackTrace();
+				}
+				try{
 					if(con!=null)
 					con.close();
 				}	
 				catch(SQLException se){
 					se.printStackTrace();
 				}
-				
 			}
 		});
-		
+	
 		loadItems();
-		
 	}//constructor
 	
-	private void loadItems() {
+	private void loadItems(){
 		System.out.println("load Items()");
+		
 		try {
 			Class.forName("oracle.jdbc.driver.OracleDriver");
-			
 			con=DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:xe","system","manoj");
-			if(con!=null) {
-			ps1=con.prepareStatement("insert into student2 values(?,?,?)");
-			ps2=con.prepareStatement("delete from student2 where sno=?");
-			ps3=con.prepareStatement("update student2 set name = ?,addr=? where sno=?");
-			st=con.createStatement();
 			
+			if(con!=null)
+				st=con.createStatement();
+			
+			if(st!=null)
+				rs1=st.executeQuery("select sno from student");
+			if(rs1!=null){
+				while(rs1.next()) {
+					tno.addItem(rs1.getInt(1));
+				}
 			}
-		
-		}catch(SQLException se) {
-			se.printStackTrace();
-		}catch(Exception e) {
-			e.printStackTrace();
+			
+			if(con!=null)
+				ps=con.prepareStatement("select *from student where sno=?");
+			
+			if(con!=null){
+				cs=con.prepareCall("{call find_pass_fail(?,?,?,?)}");
+				cs.registerOutParameter(4,Types.VARCHAR);
+			}//if ps
 		}
-	}
+		catch(SQLException se) {
+			se.printStackTrace();
+		}
+		catch(ClassNotFoundException cnf) {
+			cnf.printStackTrace();
+		}
+	}//loaditems
 	
 	public void actionPerformed(ActionEvent ae) {
-		int ino=0,result=0,uno=0,uresult=0,dno=0,dresult=0;
-		String name=null,addr=null;
-		String uname=null,uaddr=null;
-		System.out.println("Actionperformed(-)");
+		int m1=0,m2=0,m3=0;
+		String result=null;
+		System.out.println("actionPerformed");
 		
-		if(ae.getSource()==jinsert) {
-			System.out.println("insert btn is Clicked");
+		if(ae.getSource()==bdetails){
+			System.out.println("Details btn is clicked");
 			try {
-				ino=Integer.parseInt(tno.getText());
-				name=tname.getText();
-				addr=taddr.getText();
-				//set values for insert btn
-				ps1.setInt(1, ino);
-				ps1.setString(2, name);
-				ps1.setString(3, addr);
-				result=ps1.executeUpdate();
-				if(result==1) {
-					System.out.println("insertion succesful");
-				}else {
-					System.out.println("insertion failed");
-				}
-			}catch(SQLException se) {
-				se.printStackTrace();
-			}catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
-		else if(ae.getSource()==jupdate) {
-			System.out.println("Update btn is Clicked");
-			try {
-				uno=Integer.parseInt(tno.getText());
-				uname=tname.getText();
-				uaddr=taddr.getText();
-				//set values for update btn
-				ps3.setString(1,uname);
-				ps3.setString(2,uaddr);
-				ps3.setInt(3,uno);
+				int no=(Integer)tno.getSelectedItem();
 				
-				uresult=ps3.executeUpdate();
-				if(uresult==1) {
-					System.out.println("update succesfuly");
-				}else {
-					System.out.println("updation failed");
+				if(ps!=null) {
+					ps.setInt(1, no);
+					rs2=ps.executeQuery();
 				}
-			}catch(SQLException se) {
-				se.printStackTrace();
-			}catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
-		else if(ae.getSource()==jdelete) {
-			System.out.println("Delete btn is Clicked");
-			try {
-					dno=Integer.parseInt(tno.getText());
-					
-					ps2.setLong(1, dno);
-					dresult=ps2.executeUpdate();
-					
-					if(dresult==1) {
-						System.out.println("delete succesfully");
-					}else {
-						System.out.println("delete query failed");
+				if(rs2!=null) {
+					if(rs2.next()) {
+						tname.setText(rs2.getString(2));
+						tm1.setText(rs2.getString(3));
+						tm2.setText(rs2.getString(4));
+						tm3.setText(rs2.getString(5));
 					}
+				}
 			}//try
 			catch(SQLException se) {
 				se.printStackTrace();
-			}catch(Exception e) {
-				e.printStackTrace();
 			}
-		}else {
-			System.out.println("View btn is Clicked\n");
+		}//if
+		else {
+			System.out.println("Result btn is Clicked");
 			try {
-				rs=st.executeQuery("select * from student2");
+				m1=Integer.parseInt(tm1.getText());
+				m2=Integer.parseInt(tm2.getText());
+				m3=Integer.parseInt(tm3.getText());
 				
-				if(rs!=null) {
-					while(rs.next()) {
-						System.out.println(rs.getInt(1)+" "+rs.getString(2)+" "+rs.getString(3));
-					}
-				}
+				if(cs!=null) {
+					cs.setInt(1, m1); cs.setInt(2, m2); cs.setInt(3, m3);
 					
-			}catch(SQLException se) {
+					cs.execute();
+					result=cs.getString(4);
+					tres.setText(result);
+				}//if cs
+			}//try
+			catch(SQLException se) {
 				se.printStackTrace();
-			}catch(Exception e) {
-				e.printStackTrace();
 			}
-		}
-	}
+		}//else
+	}//action
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		System.out.println("main(-) method");
-		new project1();
-
+		System.out.println("main(-) class");
+		new miniproject();
 	}
-
 }
+//class
